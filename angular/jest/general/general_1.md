@@ -1,664 +1,1115 @@
-<!--
-To update TOC run:
-  npx markdown-toc --maxdepth 3 -i Readme.md
-
-To reformat run:
-  npx prettier --print-width 100 --single-quote --no-semi --prose-wrap never --write Readme.md
--->
-
-<div align="center" markdown="1">
-
-<img src="https://raw.githubusercontent.com/facebook/jest/main/website/static/img/jest-readme-headline.png" width="200">
-
-<h1>Jest cheat sheet</h1>
-
-</div>
-
-_Migrating to Vitest? [Check out Vitest cheat sheet](https://github.com/sapegin/vitest-cheat-sheet)._
-
-_I recommend [Mrm](https://github.com/sapegin/mrm/tree/master/packages/mrm-task-jest) and [jest-codemods](https://github.com/skovhus/jest-codemods) for single-command Jest installation and easy migration from other frameworks._
-
-[![Washing your code. A book on clean code for frontend developers](https://sapegin.me/images/washing-code-github.jpg)](https://sapegin.me/book/)
-
-## Table of contents
-
-<!-- toc -->
-
-- [Test structure](#test-structure)
-- [Matchers](#matchers)
-  - [Basic matchers](#basic-matchers)
-  - [Truthiness](#truthiness)
-  - [Numbers](#numbers)
-  - [Strings](#strings)
-  - [Arrays](#arrays)
-  - [Objects](#objects)
-  - [Exceptions](#exceptions)
-  - [Snapshots](#snapshots)
-  - [Mock functions](#mock-functions)
-  - [Misc](#misc)
-  - [Promise matchers (Jest 20+)](#promise-matchers-jest-20)
-- [Async tests](#async-tests)
-  - [async/await](#asyncawait)
-  - [Promises](#promises)
-  - [done() callback](#done-callback)
-- [Mocks](#mocks)
-  - [Mock functions](#mock-functions-1)
-  - [Returning, resolving and rejecting values](#returning-resolving-and-rejecting-values)
-  - [Mock modules using `jest.mock` method](#mock-modules-using-jestmock-method)
-  - [Mock modules using a mock file](#mock-modules-using-a-mock-file)
-  - [Mock object methods](#mock-object-methods)
-  - [Mock getters and setters (Jest 22.1.0+)](#mock-getters-and-setters-jest-2210)
-  - [Mock getters and setters](#mock-getters-and-setters)
-  - [Clearing and restoring mocks](#clearing-and-restoring-mocks)
-  - [Accessing the original module when using mocks](#accessing-the-original-module-when-using-mocks)
-  - [Timer mocks](#timer-mocks)
-- [Data-driven tests (Jest 23+)](#data-driven-tests-jest-23)
-- [Skipping tests](#skipping-tests)
-- [Testing modules with side effects](#testing-modules-with-side-effects)
-- [Usage with Babel and TypeScript](#usage-with-babel-and-typescript)
-- [Resources](#resources)
-- [You may also like](#you-may-also-like)
-- [Contributing](#contributing)
-- [Sponsoring](#sponsoring)
-- [Author and license](#author-and-license)
-
-<!-- tocstop -->
-
-## Test structure
-
-```js
-describe('makePoniesPink', () => {
-  beforeAll(() => {
-    /* Runs before all tests */
-  })
-  afterAll(() => {
-    /* Runs after all tests */
-  })
-  beforeEach(() => {
-    /* Runs before each test */
-  })
-  afterEach(() => {
-    /* Runs after each test */
-  })
-
-  test('make each pony pink', () => {
-    const actual = fn(['Alice', 'Bob', 'Eve'])
-    expect(actual).toEqual(['Pink Alice', 'Pink Bob', 'Pink Eve'])
-  })
-})
-```
-
-## Matchers
-
-[Using matchers](http://jestjs.io/docs/en/using-matchers), [matchers docs](https://jestjs.io/docs/en/expect)
-
-### Basic matchers
-
-```js
-expect(42).toBe(42) // Strict equality (===)
-expect(42).not.toBe(3) // Strict equality (!==)
-expect([1, 2]).toEqual([1, 2]) // Deep equality
-expect({ a: undefined, b: 2 }).toEqual({ b: 2 }) // Deep equality
-expect({ a: undefined, b: 2 }).not.toStrictEqual({ b: 2 }) // Strict equality (Jest 23+)
-```
-
-### Truthiness
-
-```js
-// Matches anything that an if statement treats as true (true, 1, 'hello', {}, [], 5.3)
-expect('foo').toBeTruthy()
-// Matches anything that an if statement treats as false (false, 0, '', null, undefined, NaN)
-expect('').toBeFalsy()
-// Matches only null
-expect(null).toBeNull()
-// Matches only undefined
-expect(undefined).toBeUndefined()
-// The opposite of toBeUndefined
-expect(7).toBeDefined()
-// Matches true or false
-expect(true).toEqual(expect.any(Boolean))
-```
-
-### Numbers
-
-```js
-expect(2).toBeGreaterThan(1)
-expect(1).toBeGreaterThanOrEqual(1)
-expect(1).toBeLessThan(2)
-expect(1).toBeLessThanOrEqual(1)
-expect(0.2 + 0.1).toBeCloseTo(0.3, 5)
-expect(NaN).toEqual(expect.any(Number))
-```
-
-### Strings
-
-```js
-expect('long string').toMatch('str')
-expect('string').toEqual(expect.any(String))
-expect('coffee').toMatch(/ff/)
-expect('pizza').not.toMatch('coffee')
-expect(['pizza', 'coffee']).toEqual([expect.stringContaining('zz'), expect.stringMatching(/ff/)])
-```
-
-### Arrays
-
-```js
-expect([]).toEqual(expect.any(Array))
-expect(['Alice', 'Bob', 'Eve']).toHaveLength(3)
-expect(['Alice', 'Bob', 'Eve']).toContain('Alice')
-expect([{ a: 1 }, { a: 2 }]).toContainEqual({ a: 1 })
-expect(['Alice', 'Bob', 'Eve']).toEqual(expect.arrayContaining(['Alice', 'Bob']))
-```
-
-### Objects
-
-```js
-expect({ a: 1 }).toHaveProperty('a')
-expect({ a: 1 }).toHaveProperty('a', 1)
-expect({ a: { b: 1 } }).toHaveProperty('a.b')
-expect({ a: 1, b: 2 }).toMatchObject({ a: 1 })
-expect({ a: 1, b: 2 }).toMatchObject({
-  a: expect.any(Number),
-  b: expect.any(Number),
-})
-expect([{ a: 1 }, { b: 2 }]).toEqual([
-  expect.objectContaining({ a: expect.any(Number) }),
-  expect.anything(),
-])
-```
-
-### Exceptions
-
-```js
-// const fn = () => { throw new Error('Out of cheese!') }
-expect(fn).toThrow()
-expect(fn).toThrow('Out of cheese')
-expect(fn).toThrowErrorMatchingSnapshot()
-```
-
-<details>
-  <summary>Aliases</summary>
-
-- `toThrowError` → `toThrow`
-  </details>
-
-### Snapshots
-
-```js
-expect(node).toMatchSnapshot()
-// Jest 23+
-expect(user).toMatchSnapshot({
-  date: expect.any(Date),
-})
-expect(user).toMatchInlineSnapshot()
-```
-
-### Mock functions
-
-```js
-// const fn = jest.fn()
-// const fn = jest.fn().mockName('Unicorn') -- named mock, Jest 22+
-expect(fn).toBeCalled() // Function was called
-expect(fn).not.toBeCalled() // Function was *not* called
-expect(fn).toHaveBeenCalledTimes(1) // Function was called only once
-expect(fn).toBeCalledWith(arg1, arg2) // Any of calls was with these arguments
-expect(fn).toHaveBeenLastCalledWith(arg1, arg2) // Last call was with these arguments
-expect(fn).toHaveBeenNthCalledWith(callNumber, args) // Nth call was with these arguments (Jest 23+)
-expect(fn).toHaveReturnedTimes(2) // Function was returned without throwing an error (Jest 23+)
-expect(fn).toHaveReturnedWith(value) // Function returned a value (Jest 23+)
-expect(fn).toHaveLastReturnedWith(value) // Last function call returned a value (Jest 23+)
-expect(fn).toHaveNthReturnedWith(value) // Nth function call returned a value (Jest 23+)
-expect(fn.mock.calls).toEqual([
-  ['first', 'call', 'args'],
-  ['second', 'call', 'args'],
-]) // Multiple calls
-expect(fn.mock.calls[0][0]).toBe(2) // fn.mock.calls[0][0] — the first argument of the first call
-```
-
-<details>
-  <summary>Aliases</summary>
-
-- `toBeCalled` → `toHaveBeenCalled`
-- `toBeCalledWith` → `toHaveBeenCalledWith`
-- `lastCalledWith` → `toHaveBeenLastCalledWith`
-- `nthCalledWith` → `toHaveBeenNthCalledWith`
-- `toReturnTimes` → `toHaveReturnedTimes`
-- `toReturnWith` → `toHaveReturnedWith`
-- `lastReturnedWith` → `toHaveLastReturnedWith`
-- `nthReturnedWith` → `toHaveNthReturnedWith`
-  </details>
-
-### Misc
-
-```js
-expect(new A()).toBeInstanceOf(A)
-expect(() => {}).toEqual(expect.any(Function))
-expect('pizza').toEqual(expect.anything())
-```
-
-### Promise matchers (Jest 20+)
-
-```js
-test('resolve to lemon', () => {
-  expect.assertions(1)
-  // Make sure to add a return statement
-  return expect(Promise.resolve('lemon')).resolves.toBe('lemon')
-  return expect(Promise.reject('octopus')).rejects.toBeDefined()
-  return expect(Promise.reject(Error('pizza'))).rejects.toThrow()
-})
-```
-
-Or with async/await:
-
-```js
-test('resolve to lemon', async () => {
-  expect.assertions(2)
-  await expect(Promise.resolve('lemon')).resolves.toBe('lemon')
-  await expect(Promise.resolve('lemon')).resolves.not.toBe('octopus')
-})
-```
-
-[resolves docs](https://jestjs.io/docs/en/expect#resolves)
-
-## Async tests
-
-See [more examples](https://jestjs.io/docs/en/tutorial-async) in Jest docs.
-
-It’s a good practice to specify a number of expected assertions in async tests, so the test will fail if your assertions weren’t called at all.
-
-```js
-test('async test', () => {
-  expect.assertions(3) // Exactly three assertions are called during a test
-  // OR
-  expect.hasAssertions() // At least one assertion is called during a test
-
-  // Your async tests
-})
-```
-
-You can also do this per file, outside any `describe` and `test`:
-
-```js
-beforeEach(expect.hasAssertions)
-```
-
-This will verify the presence of at least one assertion per test case. It also plays nice with more specific `expect.assertions(3)` declarations.
-
-In addition, you can enforce it globally, across all test files (instead of having to repeat per file) by adding the exact same line into one of the scripts referenced by the `setupFilesAfterEnv` configuration option. (For example, `setupTests.ts` and that is referenced via a `setupFilesAfterEnv: ['<rootDir>/setupTests.ts']` entry in `jest.config.ts`.)
-
-### async/await
-
-```js
-test('async test', async () => {
-  expect.assertions(1)
-  const result = await runAsyncOperation()
-  expect(result).toBe(true)
-})
-```
-
-### Promises
-
-_Return_ a Promise from your test:
-
-```js
-test('async test', () => {
-  expect.assertions(1)
-  return runAsyncOperation().then((result) => {
-    expect(result).toBe(true)
-  })
-})
-```
-
-### done() callback
-
-Wrap your assertions in try/catch block, otherwise Jest will ignore failures:
-
-```js
-test('async test', (done) => {
-  expect.assertions(1)
-  runAsyncOperation()
-  setTimeout(() => {
-    try {
-      const result = getAsyncOperationResult()
-      expect(result).toBe(true)
-      done()
-    } catch (err) {
-      done.fail(err)
-    }
-  })
-})
-```
-
-## Mocks
-
-### Mock functions
-
-```js
-test('call the callback', () => {
-  const callback = jest.fn()
-  fn(callback)
-  expect(callback).toBeCalled()
-  expect(callback.mock.calls[0][1].baz).toBe('pizza') // Second argument of the first call
-  // Match the first and the last arguments but ignore the second argument
-  expect(callback).toHaveBeenLastCalledWith('meal', expect.anything(), 'margarita')
-})
-```
-
-You can also use snapshots:
-
-```js
-test('call the callback', () => {
-  const callback = jest.fn().mockName('Unicorn') // mockName is available in Jest 22+
-  fn(callback)
-  expect(callback).toMatchSnapshot()
-  // ->
-  // [MockFunction Unicorn] {
-  //   "calls": Array [
-  // ...
-})
-```
-
-And pass an implementation to `jest.fn` function:
-
-```js
-const callback = jest.fn(() => true)
-```
-
-[Mock functions docs](https://jestjs.io/docs/en/mock-function-api)
-
-### Returning, resolving and rejecting values
-
-Your mocks can return values:
-
-```js
-const callback = jest.fn().mockReturnValue(true)
-const callbackOnce = jest.fn().mockReturnValueOnce(true)
-```
-
-Or resolve values:
-
-```js
-const promise = jest.fn().mockResolvedValue(true)
-const promiseOnce = jest.fn().mockResolvedValueOnce(true)
-```
-
-They can even reject values:
-
-```js
-const failedPromise = jest.fn().mockRejectedValue('Error')
-const failedPromiseOnce = jest.fn().mockRejectedValueOnce('Error')
-```
-
-You can even combine these:
-
-```js
-const callback = jest.fn().mockReturnValueOnce(false).mockReturnValue(true)
-
-// ->
-//  call 1: false
-//  call 2+: true
-```
-
-### Mock modules using `jest.mock` method
-
-```js
-jest.mock('lodash/memoize', () => (a) => a) // The original lodash/memoize should exist
-jest.mock('lodash/memoize', () => (a) => a, { virtual: true }) // The original lodash/memoize isn’t required
-```
-
-[jest.mock docs](https://jestjs.io/docs/en/jest-object#jestmockmodulename-factory-options)
-
-> [!NOTE]  
-> When using `babel-jest`, calls to `jest.mock` will automatically be hoisted to the top of the code block. Use `jest.doMock` if you want to explicitly avoid this behavior.
-
-### Mock modules using a mock file
-
-1.  Create a file like `__mocks__/lodash/memoize.js`:
-
-    ```js
-    module.exports = (a) => a
-    ```
-
-2.  Add to your test:
-
-    ```js
-    jest.mock('lodash/memoize')
-    ```
-
-> [!NOTE]  
-> When using `babel-jest`, calls to `jest.mock` will automatically be hoisted to the top of the code block. Use `jest.doMock` if you want to explicitly avoid this behavior.
-
-[Manual mocks docs](https://jestjs.io/docs/en/manual-mocks)
-
-### Mock object methods
-
-```js
-const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
-expect(console.log.mock.calls).toEqual([['dope'], ['nope']])
-spy.mockRestore()
-```
-
-```js
-const spy = jest.spyOn(ajax, 'request').mockImplementation(() => Promise.resolve({ success: true }))
-expect(spy).toHaveBeenCalled()
-spy.mockRestore()
-```
-
-### Mock getters and setters (Jest 22.1.0+)
-
-```js
-const location = {}
-const getTitle = jest.spyOn(location, 'title', 'get').mockImplementation(() => 'pizza')
-const setTitle = jest.spyOn(location, 'title', 'set').mockImplementation(() => {})
-```
-
-### Mock getters and setters
-
-```js
-const getTitle = jest.fn(() => 'pizza')
-const setTitle = jest.fn()
-const location = {}
-Object.defineProperty(location, 'title', {
-  get: getTitle,
-  set: setTitle,
-})
-```
-
-### Clearing and restoring mocks
-
-For one mock:
-
-```js
-fn.mockClear() // Clears mock usage date (fn.mock.calls, fn.mock.instances)
-fn.mockReset() // Clears and removes any mocked return values or implementations
-fn.mockRestore() // Resets and restores the initial implementation
-```
-
-> [!NOTE]  
-> The `mockRestore` works only with mocks created by `jest.spyOn`.
-
-For all mocks:
-
-```js
-jest.clearAllMocks()
-jest.resetAllMocks()
-jest.restoreAllMocks()
-```
-
-### Accessing the original module when using mocks
-
-```js
-jest.mock('fs')
-const fs = require('fs') // Mocked module
-const fs = require.requireActual('fs') // Original module
-```
-
-### Timer mocks
-
-Write synchronous test for code that uses native timer functions (`setTimeout`, `setInterval`, `clearTimeout`, `clearInterval`).
-
-```js
-// Enable fake timers
-jest.useFakeTimers()
-
-test('kill the time', () => {
-  const callback = jest.fn()
-
-  // Run some code that uses setTimeout or setInterval
-  const actual = someFunctionThatUseTimers(callback)
-
-  // Fast-forward until all timers have been executed
-  jest.runAllTimers()
-
-  // Check the results synchronously
-  expect(callback).toHaveBeenCalledTimes(1)
-})
-```
-
-Or adjust timers by time with [advanceTimersByTime()](https://jestjs.io/docs/en/timer-mocks#advance-timers-by-time):
-
-```js
-// Enable fake timers
-jest.useFakeTimers()
-
-test('kill the time', () => {
-  const callback = jest.fn()
-
-  // Run some code that uses setTimeout or setInterval
-  const actual = someFunctionThatUseTimers(callback)
-
-  // Fast-forward for 250 ms
-  jest.advanceTimersByTime(250)
-
-  // Check the results synchronously
-  expect(callback).toHaveBeenCalledTimes(1)
-})
-```
-
-Use [jest.runOnlyPendingTimers()](https://jestjs.io/docs/en/timer-mocks#run-pending-timers) for special cases.
-
-> [!NOTE]  
-> You should call `jest.useFakeTimers()` in your test case to use other fake timer methods.
-
-## Data-driven tests (Jest 23+)
-
-Run the same test with different data:
-
-```js
-test.each([
-  [1, 1, 2],
-  [1, 2, 3],
-  [2, 1, 3],
-])('.add(%s, %s)', (a, b, expected) => {
-  expect(a + b).toBe(expected)
-})
-```
-
-Or the same using template literals:
-
-```js
-test.each`
-  a    | b    | expected
-  ${1} | ${1} | ${2}
-  ${1} | ${2} | ${3}
-  ${2} | ${1} | ${3}
-`('returns $expected when $a is added $b', ({ a, b, expected }) => {
-  expect(a + b).toBe(expected)
-})
-```
-
-Or on `describe` level:
-
-```js
-describe.each([['mobile'], ['tablet'], ['desktop']])('checkout flow on %s', (viewport) => {
-  test('displays success page', () => {
-    //
-  })
-})
-```
-
-[describe.each() docs](https://jestjs.io/docs/en/api#describeeachtablename-fn-timeout), [test.each() docs](https://jestjs.io/docs/en/api#testeachtablename-fn-timeout),
-
-## Skipping tests
-
-Don’t run these tests:
-
-```js
-describe.skip('makePoniesPink'...
-tests.skip('make each pony pink'...
-```
-
-Run only these tests:
-
-```js
-describe.only('makePoniesPink'...
-tests.only('make each pony pink'...
-```
-
-## Testing modules with side effects
-
-Node.js and Jest will cache modules you `require`. To test modules with side effects you’ll need to reset the module registry between tests:
-
-```js
-const modulePath = '../module-to-test'
-
-afterEach(() => {
-  jest.resetModules()
-})
-
-test('first test', () => {
-  // Prepare conditions for the first test
-  const result = require(modulePath)
-  expect(result).toMatchSnapshot()
-})
-
-test('second text', () => {
-  // Prepare conditions for the second test
-  const fn = () => require(modulePath)
-  expect(fn).toThrow()
-})
-```
-
-## Usage with Babel and TypeScript
-
-Add [babel-jest](https://github.com/facebook/jest/tree/master/packages/babel-jest) or [ts-jest](https://github.com/kulshekhar/ts-jest). Check their docs for installation instructions.
-
-## Resources
-
-- [Jest site](https://facebook.github.io/jest/)
-- [Modern React testing, part 1: best practices](https://blog.sapegin.me/all/react-testing-1-best-practices/) by Artem Sapegin
-- [Modern React testing, part 2: Jest and Enzyme](https://blog.sapegin.me/all/react-testing-2-jest-and-enzyme/) by Artem Sapegin
-- [Modern React testing, part 3: Jest and React Testing Library](https://blog.sapegin.me/all/react-testing-3-jest-and-react-testing-library/) by Artem Sapegin
-- [Modern React testing, part 4: Cypress and Cypress Testing Library](https://sapegin.me/blog/react-testing-4-cypress/) by Artem Sapegin
-- [Modern React testing, part 5: Playwright](https://sapegin.me/blog/react-testing-5-playwright/) by Artem Sapegin
-- [React Testing Examples](https://react-testing-examples.com/)
-- [Testing React Applications](https://youtu.be/59Ndb3YkLKA) by Max Stoiber
-- [Effective Snapshot Testing](https://blog.kentcdodds.com/effective-snapshot-testing-e0d1a2c28eca) by Kent C. Dodds
-- [Migrating to Jest](https://medium.com/@kentcdodds/migrating-to-jest-881f75366e7e#.pc4s5ut6z) by Kent C. Dodds
-- [Migrating AVA to Jest](http://browniefed.com/blog/migrating-ava-to-jest/) by Jason Brown
-- [How to Test React and MobX with Jest](https://semaphoreci.com/community/tutorials/how-to-test-react-and-mobx-with-jest) by Will Stern
-- [Testing React Intl components with Jest and Enzyme](https://medium.com/@sapegin/testing-react-intl-components-with-jest-and-enzyme-f9d43d9c923e) by Artem Sapegin
-- [Testing with Jest: 15 Awesome Tips and Tricks](https://medium.com/@stipsan/testing-with-jest-15-awesome-tips-and-tricks-42150ec4c262) by Stian Didriksen
-- Taking Advantage of Jest Matchers by Ben McCormick: [Part 1](https://benmccormick.org/2017/08/15/jest-matchers-1/), [Part 2](https://benmccormick.org/2017/09/04/jest-matchers-2/)
+# Guía de tests unitarios en Angular con **Jest** (sin Angular Testing Library)
+
+> Puedes guardar este archivo como `testing-angular-jest.md`  
+> Todo el contenido está preparado para un proyecto Angular que usa **Jest** en lugar de Karma/Jasmine  
+> (por ejemplo con `jest-preset-angular`).
 
 ---
 
-## You may also like
+## 1. Chuleta rápida de Jest
 
-- [Opinionated list of React components](https://github.com/sapegin/react-components)
+```ts
+describe('grupo de tests', () => {
+  beforeEach(() => {
+    // se ejecuta antes de cada test
+  });
 
-## Contributing
+  test('debería hacer algo', () => {
+    const resultado = 1 + 1;
+    expect(resultado).toBe(2);
+  });
 
-Improvements are welcome! Open an issue or send a pull request.
+  it('debería llamar a una función', () => {
+    const obj = { foo: () => {} };
+    const spy = jest.spyOn(obj, 'foo');
 
-## Sponsoring
+    obj.foo();
 
-This software has been developed with lots of coffee, buy me one more cup to keep it going.
+    expect(spy).toHaveBeenCalled();
+  });
+});
+```
 
-<a href="https://www.buymeacoffee.com/sapegin" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/lato-orange.png" alt="Buy Me A Coffee" height="51" width="217" ></a>
+Diferencias principales respecto a Jasmine:
 
-## Author and license
+- Espías: `jest.fn()`, `jest.spyOn()`
+- Matchers muy parecidos: `toBe`, `toEqual`, `toHaveBeenCalledWith`, etc.
+- Timers: `jest.useFakeTimers()`, `jest.advanceTimersByTime(ms)` (además de `fakeAsync/tick` de Angular).
+- Mocks: `jest.mock('modulo')`, `jest.fn()` como implementación falsa.
 
-[Artem Sapegin](https://sapegin.me/), a frontend engineer at [Stage+](https://www.stage-plus.com) and the creator of [React Styleguidist](https://react-styleguidist.js.org/). I also write about frontend at [my blog](https://sapegin.me/blog/).
+---
 
-CC0 1.0 Universal license, see the included [License.md](/License.md) file.
+## 2. Servicio simple (sin dependencias)
+
+```ts
+// math.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class MathService {
+  sum(a: number, b: number): number {
+    return a + b;
+  }
+
+  isEven(n: number): boolean {
+    return n % 2 === 0;
+  }
+}
+```
+
+```ts
+// math.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import { MathService } from './math.service';
+
+describe('MathService (Jest)', () => {
+  let service: MathService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(MathService);
+  });
+
+  it('debería crearse', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('debería sumar dos números', () => {
+    expect(service.sum(2, 3)).toBe(5);
+  });
+
+  it('debería detectar números pares', () => {
+    expect(service.isEven(4)).toBe(true);
+    expect(service.isEven(5)).toBe(false);
+  });
+});
+```
+
+---
+
+## 3. Servicio con dependencias y espías de Jest
+
+```ts
+// logger.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class LoggerService {
+  log(message: string) {
+    console.log(message);
+  }
+}
+```
+
+```ts
+// user.service.ts
+import { Injectable } from '@angular/core';
+import { LoggerService } from './logger.service';
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  constructor(private logger: LoggerService) {}
+
+  getUserName(): string {
+    const name = 'Alice';
+    this.logger.log(`User name is ${name}`);
+    return name;
+  }
+}
+```
+
+```ts
+// user.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import { UserService } from './user.service';
+import { LoggerService } from './logger.service';
+
+describe('UserService (Jest)', () => {
+  let service: UserService;
+  let loggerMock: jest.Mocked<LoggerService>;
+
+  beforeEach(() => {
+    const logger: jest.Mocked<LoggerService> = {
+      log: jest.fn()
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        UserService,
+        { provide: LoggerService, useValue: logger }
+      ]
+    });
+
+    service = TestBed.inject(UserService);
+    loggerMock = TestBed.inject(LoggerService) as jest.Mocked<LoggerService>;
+  });
+
+  it('debería devolver nombre y loguear', () => {
+    const name = service.getUserName();
+
+    expect(name).toBe('Alice');
+    expect(loggerMock.log).toHaveBeenCalledWith('User name is Alice');
+  });
+});
+```
+
+---
+
+## 4. Servicio con HttpClient (GET/POST/DELETE)
+
+```ts
+// todo.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export interface Todo {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
+@Injectable({ providedIn: 'root' })
+export class TodoService {
+  private baseUrl = '/api/todos';
+
+  constructor(private http: HttpClient) {}
+
+  getTodos(): Observable<Todo[]> {
+    return this.http.get<Todo[]>(this.baseUrl);
+  }
+
+  addTodo(title: string): Observable<Todo> {
+    return this.http.post<Todo>(this.baseUrl, { title, completed: false });
+  }
+
+  deleteTodo(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+}
+```
+
+```ts
+// todo.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController
+} from '@angular/common/http/testing';
+import { TodoService, Todo } from './todo.service';
+
+describe('TodoService (Jest)', () => {
+  let service: TodoService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [TodoService]
+    });
+
+    service = TestBed.inject(TodoService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('debería obtener todos (GET)', () => {
+    const mockTodos: Todo[] = [{ id: 1, title: 'Test', completed: false }];
+
+    service.getTodos().subscribe(todos => {
+      expect(todos).toEqual(mockTodos);
+    });
+
+    const req = httpMock.expectOne('/api/todos');
+    expect(req.request.method).toBe('GET');
+
+    req.flush(mockTodos);
+  });
+
+  it('debería crear todo (POST)', () => {
+    const newTodo: Todo = { id: 2, title: 'Nuevo', completed: false };
+
+    service.addTodo('Nuevo').subscribe(todo => {
+      expect(todo).toEqual(newTodo);
+    });
+
+    const req = httpMock.expectOne('/api/todos');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ title: 'Nuevo', completed: false });
+
+    req.flush(newTodo);
+  });
+
+  it('debería borrar todo (DELETE)', () => {
+    service.deleteTodo(1).subscribe(res => {
+      expect(res).toBeUndefined();
+    });
+
+    const req = httpMock.expectOne('/api/todos/1');
+    expect(req.request.method).toBe('DELETE');
+
+    req.flush(null);
+  });
+});
+```
+
+---
+
+## 5. Servicio con RxJS y manejo de errores
+
+```ts
+// user-api.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { catchError, map, of } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class UserApiService {
+  constructor(private http: HttpClient) {}
+
+  getUserNameOrFallback() {
+    return this.http.get<{ name: string }>('/api/user').pipe(
+      map(res => res.name.toUpperCase()),
+      catchError(() => of('ANÓNIMO'))
+    );
+  }
+}
+```
+
+```ts
+// user-api.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import {
+  HttpClientTestingModule,
+  HttpTestingController
+} from '@angular/common/http/testing';
+import { UserApiService } from './user-api.service';
+
+describe('UserApiService (Jest)', () => {
+  let service: UserApiService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [UserApiService]
+    });
+
+    service = TestBed.inject(UserApiService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('debería devolver el nombre en mayúsculas', () => {
+    service.getUserNameOrFallback().subscribe(name => {
+      expect(name).toBe('ALICE');
+    });
+
+    const req = httpMock.expectOne('/api/user');
+    req.flush({ name: 'Alice' });
+  });
+
+  it('debería devolver ANÓNIMO si hay error', () => {
+    service.getUserNameOrFallback().subscribe(name => {
+      expect(name).toBe('ANÓNIMO');
+    });
+
+    const req = httpMock.expectOne('/api/user');
+    req.flush('error', { status: 500, statusText: 'Server Error' });
+  });
+});
+```
+
+---
+
+## 6. Servicio basado en BehaviorSubject (estado compartido)
+
+```ts
+// state.service.ts
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class StateService {
+  private countSubject = new BehaviorSubject<number>(0);
+  count$ = this.countSubject.asObservable();
+
+  increment() {
+    this.countSubject.next(this.countSubject.value + 1);
+  }
+
+  reset() {
+    this.countSubject.next(0);
+  }
+}
+```
+
+```ts
+// state.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import { StateService } from './state.service';
+
+describe('StateService (Jest)', () => {
+  let service: StateService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [StateService]
+    });
+    service = TestBed.inject(StateService);
+  });
+
+  it('debería iniciar en 0', done => {
+    service.count$.subscribe(value => {
+      expect(value).toBe(0);
+      done();
+    });
+  });
+
+  it('debería incrementar', () => {
+    const resultados: number[] = [];
+    const sub = service.count$.subscribe(value => resultados.push(value));
+
+    service.increment();
+    service.increment();
+
+    expect(resultados).toEqual([0, 1, 2]);
+    sub.unsubscribe();
+  });
+
+  it('debería hacer reset', done => {
+    service.increment();
+    service.reset();
+    service.count$.subscribe(value => {
+      expect(value).toBe(0);
+      done();
+    });
+  });
+});
+```
+
+---
+
+## 7. Servicio asíncrono con Promises y timers de Jest
+
+```ts
+// async.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class AsyncService {
+  getValueAsync(): Promise<number> {
+    return new Promise(resolve => setTimeout(() => resolve(42), 1000));
+  }
+}
+```
+
+```ts
+// async.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import { AsyncService } from './async.service';
+
+describe('AsyncService (Jest timers)', () => {
+  let service: AsyncService;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    TestBed.configureTestingModule({
+      providers: [AsyncService]
+    });
+    service = TestBed.inject(AsyncService);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('debería resolver 42 usando timers de Jest', async () => {
+    const promise = service.getValueAsync();
+
+    jest.advanceTimersByTime(1000);
+
+    await expect(promise).resolves.toBe(42);
+  });
+});
+```
+
+---
+
+## 8. Servicio con Observables y `done`
+
+```ts
+// observable.service.ts
+import { Injectable } from '@angular/core';
+import { of } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class ObservableService {
+  getValue$() {
+    return of(1, 2, 3);
+  }
+}
+```
+
+```ts
+// observable.service.spec.ts
+import { TestBed } from '@angular/core/testing';
+import { ObservableService } from './observable.service';
+
+describe('ObservableService (Jest)', () => {
+  let service: ObservableService;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [ObservableService]
+    });
+    service = TestBed.inject(ObservableService);
+  });
+
+  it('debería emitir 1,2,3', done => {
+    const values: number[] = [];
+    service.getValue$().subscribe({
+      next: v => values.push(v),
+      complete: () => {
+        expect(values).toEqual([1, 2, 3]);
+        done();
+      }
+    });
+  });
+});
+```
+
+---
+
+## 9. Componente básico con @Input
+
+```ts
+// hello.component.ts
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-hello',
+  template: `<h1>Hello {{ name }}!</h1>`
+})
+export class HelloComponent {
+  @Input() name = 'World';
+}
+```
+
+```ts
+// hello.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HelloComponent } from './hello.component';
+
+describe('HelloComponent (Jest)', () => {
+  let component: HelloComponent;
+  let fixture: ComponentFixture<HelloComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [HelloComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(HelloComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('debería mostrar World por defecto', () => {
+    fixture.detectChanges();
+    const h1: HTMLElement = fixture.nativeElement.querySelector('h1');
+    expect(h1.textContent).toContain('Hello World!');
+  });
+
+  it('debería mostrar el nombre pasado por input', () => {
+    component.name = 'Angular';
+    fixture.detectChanges();
+    const h1: HTMLElement = fixture.nativeElement.querySelector('h1');
+    expect(h1.textContent).toContain('Hello Angular!');
+  });
+});
+```
+
+---
+
+## 10. Componente con botón y método
+
+```ts
+// counter.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-counter',
+  template: `
+    <p data-testid="value">{{ count }}</p>
+    <button (click)="increment()">Incrementar</button>
+  `
+})
+export class CounterComponent {
+  count = 0;
+
+  increment(): void {
+    this.count++;
+  }
+}
+```
+
+```ts
+// counter.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CounterComponent } from './counter.component';
+import { By } from '@angular/platform-browser';
+
+describe('CounterComponent (Jest)', () => {
+  let component: CounterComponent;
+  let fixture: ComponentFixture<CounterComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [CounterComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(CounterComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('debería iniciar a 0', () => {
+    const value = fixture.nativeElement.querySelector('[data-testid="value"]');
+    expect(value.textContent.trim()).toBe('0');
+  });
+
+  it('debería incrementar al hacer click', () => {
+    const button = fixture.debugElement.query(By.css('button'));
+    button.triggerEventHandler('click', null);
+    fixture.detectChanges();
+
+    const value = fixture.nativeElement.querySelector('[data-testid="value"]');
+    expect(value.textContent.trim()).toBe('1');
+  });
+});
+```
+
+---
+
+## 11. Componente con @Output (EventEmitter)
+
+```ts
+// child.component.ts
+import { Component, EventEmitter, Output } from '@angular/core';
+
+@Component({
+  selector: 'app-child',
+  template: `<button (click)="notify()">Notify parent</button>`
+})
+export class ChildComponent {
+  @Output() clicked = new EventEmitter<string>();
+
+  notify() {
+    this.clicked.emit('hola padre');
+  }
+}
+```
+
+```ts
+// child.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ChildComponent } from './child.component';
+import { By } from '@angular/platform-browser';
+
+describe('ChildComponent (Jest)', () => {
+  let component: ChildComponent;
+  let fixture: ComponentFixture<ChildComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ChildComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ChildComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('debería emitir evento al hacer click', () => {
+    const emitSpy = jest.spyOn(component.clicked, 'emit');
+
+    const button = fixture.debugElement.query(By.css('button'));
+    button.triggerEventHandler('click', null);
+
+    expect(emitSpy).toHaveBeenCalledWith('hola padre');
+  });
+});
+```
+
+---
+
+## 12. Componente que usa un servicio (mock en el TestBed)
+
+```ts
+// todo-list.component.ts
+import { Component, OnInit } from '@angular/core';
+import { TodoService, Todo } from '../../services/todo.service';
+
+@Component({
+  selector: 'app-todo-list',
+  template: `
+    <ul>
+      <li *ngFor="let todo of todos">{{ todo.title }}</li>
+    </ul>
+  `
+})
+export class TodoListComponent implements OnInit {
+  todos: Todo[] = [];
+
+  constructor(private todoService: TodoService) {}
+
+  ngOnInit(): void {
+    this.todoService.getTodos().subscribe(t => (this.todos = t));
+  }
+}
+```
+
+```ts
+// todo-list.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { TodoListComponent } from './todo-list.component';
+import { TodoService } from '../../services/todo.service';
+import { By } from '@angular/platform-browser';
+
+describe('TodoListComponent (Jest)', () => {
+  let component: TodoListComponent;
+  let fixture: ComponentFixture<TodoListComponent>;
+  let todoServiceMock: jest.Mocked<TodoService>;
+
+  beforeEach(async () => {
+    const spy: jest.Mocked<TodoService> = {
+      getTodos: jest.fn(),
+      addTodo: jest.fn(),
+      deleteTodo: jest.fn()
+    } as any;
+
+    await TestBed.configureTestingModule({
+      declarations: [TodoListComponent],
+      providers: [{ provide: TodoService, useValue: spy }]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TodoListComponent);
+    component = fixture.componentInstance;
+    todoServiceMock = TestBed.inject(TodoService) as jest.Mocked<TodoService>;
+  });
+
+  it('debería mostrar lista de todos', () => {
+    todoServiceMock.getTodos.mockReturnValue(
+      of([{ id: 1, title: 'Test todo', completed: false }]) as any
+    );
+
+    fixture.detectChanges();
+
+    const items = fixture.debugElement.queryAll(By.css('li'));
+    expect(items.length).toBe(1);
+    expect(items[0].nativeElement.textContent).toContain('Test todo');
+  });
+});
+```
+
+---
+
+## 13. Componente con Reactive Forms
+
+```ts
+// login-form.component.ts
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+@Component({
+  selector: 'app-login-form',
+  template: `
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <input formControlName="email" placeholder="Email" />
+      <input formControlName="password" type="password" placeholder="Password" />
+      <button type="submit" [disabled]="form.invalid">Login</button>
+    </form>
+  `
+})
+export class LoginFormComponent {
+  form: FormGroup;
+
+  constructor(private fb: FormBuilder) {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
+  }
+
+  submit(): void {
+    if (this.form.valid) {
+      console.log(this.form.value);
+    }
+  }
+}
+```
+
+```ts
+// login-form.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
+import { LoginFormComponent } from './login-form.component';
+
+describe('LoginFormComponent (Jest)', () => {
+  let component: LoginFormComponent;
+  let fixture: ComponentFixture<LoginFormComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [LoginFormComponent],
+      imports: [ReactiveFormsModule]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(LoginFormComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('debería ser inválido por defecto', () => {
+    expect(component.form.valid).toBe(false);
+  });
+
+  it('debería ser válido con datos correctos', () => {
+    component.form.setValue({
+      email: 'test@example.com',
+      password: '123456'
+    });
+
+    expect(component.form.valid).toBe(true);
+  });
+});
+```
+
+---
+
+## 14. Pipe simple
+
+```ts
+// uppercase-first.pipe.ts
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({ name: 'uppercaseFirst' })
+export class UppercaseFirstPipe implements PipeTransform {
+  transform(value: string | null): string | null {
+    if (!value) return value;
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+}
+```
+
+```ts
+// uppercase-first.pipe.spec.ts
+import { UppercaseFirstPipe } from './uppercase-first.pipe';
+
+describe('UppercaseFirstPipe (Jest)', () => {
+  const pipe = new UppercaseFirstPipe();
+
+  it('debería capitalizar la primera letra', () => {
+    expect(pipe.transform('angular')).toBe('Angular');
+  });
+
+  it('debería devolver null o vacío correctamente', () => {
+    expect(pipe.transform('')).toBe('');
+    expect(pipe.transform(null)).toBeNull();
+  });
+});
+```
+
+---
+
+## 15. Directiva de atributo con HostListener
+
+```ts
+// hover-highlight.directive.ts
+import { Directive, ElementRef, HostListener, Input } from '@angular/core';
+
+@Directive({
+  selector: '[appHoverHighlight]'
+})
+export class HoverHighlightDirective {
+  @Input('appHoverHighlight') color = 'yellow';
+
+  constructor(private el: ElementRef) {}
+
+  @HostListener('mouseenter')
+  onEnter() {
+    this.el.nativeElement.style.backgroundColor = this.color;
+  }
+
+  @HostListener('mouseleave')
+  onLeave() {
+    this.el.nativeElement.style.backgroundColor = '';
+  }
+}
+```
+
+```ts
+// hover-highlight.directive.spec.ts
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HoverHighlightDirective } from './hover-highlight.directive';
+import { By } from '@angular/platform-browser';
+
+@Component({
+  template: `<p appHoverHighlight="red">Texto 1</p>`
+})
+class TestHostComponentHover {}
+
+describe('HoverHighlightDirective (Jest)', () => {
+  let fixture: ComponentFixture<TestHostComponentHover>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [HoverHighlightDirective, TestHostComponentHover]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestHostComponentHover);
+    fixture.detectChanges();
+  });
+
+  it('debería resaltar al hacer mouseenter y quitar al mouseleave', () => {
+    const pDebug = fixture.debugElement.query(By.css('p'));
+
+    pDebug.triggerEventHandler('mouseenter', {});
+    fixture.detectChanges();
+    expect(pDebug.nativeElement.style.backgroundColor).toBe('red');
+
+    pDebug.triggerEventHandler('mouseleave', {});
+    fixture.detectChanges();
+    expect(pDebug.nativeElement.style.backgroundColor).toBe('');
+  });
+});
+```
+
+---
+
+## 16. Guard de ruta (AuthGuard)
+
+```ts
+// auth.guard.ts
+import { Injectable } from '@angular/core';
+import { CanActivate, Router } from '@angular/router';
+import { AuthService } from './auth.service';
+
+@Injectable({ providedIn: 'root' })
+export class AuthGuard implements CanActivate {
+  constructor(private auth: AuthService, private router: Router) {}
+
+  canActivate(): boolean {
+    if (!this.auth.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return false;
+    }
+    return true;
+  }
+}
+```
+
+```ts
+// auth.guard.spec.ts
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { AuthGuard } from './auth.guard';
+import { AuthService } from './auth.service';
+
+describe('AuthGuard (Jest)', () => {
+  let guard: AuthGuard;
+  let authServiceMock: jest.Mocked<AuthService>;
+  let routerMock: any;
+
+  beforeEach(() => {
+    authServiceMock = { isLoggedIn: jest.fn() } as any;
+    routerMock = { navigate: jest.fn() };
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthGuard,
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: Router, useValue: routerMock }
+      ]
+    });
+
+    guard = TestBed.inject(AuthGuard);
+  });
+
+  it('debería permitir acceso si está logueado', () => {
+    authServiceMock.isLoggedIn.mockReturnValue(true);
+
+    const result = guard.canActivate();
+    expect(result).toBe(true);
+    expect(routerMock.navigate).not.toHaveBeenCalled();
+  });
+
+  it('debería redirigir a /login si no está logueado', () => {
+    authServiceMock.isLoggedIn.mockReturnValue(false);
+
+    const result = guard.canActivate();
+    expect(result).toBe(false);
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
+  });
+});
+```
+
+---
+
+## 17. HTTP Interceptor (añadir Authorization)
+
+```ts
+// auth.interceptor.ts
+import { Injectable } from '@angular/core';
+import {
+  HttpEvent,
+  HttpHandler,
+  HttpInterceptor,
+  HttpRequest
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const token = 'fake-token';
+    const cloned = req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` }
+    });
+    return next.handle(cloned);
+  }
+}
+```
+
+```ts
+// auth.interceptor.spec.ts
+import { TestBed } from '@angular/core/testing';
+import {
+  HTTP_INTERCEPTORS,
+  HttpClient
+} from '@angular/common/http';
+import {
+  HttpClientTestingModule,
+  HttpTestingController
+} from '@angular/common/http/testing';
+import { AuthInterceptor } from './auth.interceptor';
+
+describe('AuthInterceptor (Jest)', () => {
+  let http: HttpClient;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        {
+          provide: HTTP_INTERCEPTORS,
+          useClass: AuthInterceptor,
+          multi: true
+        }
+      ]
+    });
+
+    http = TestBed.inject(HttpClient);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('debería añadir Authorization header', () => {
+    http.get('/test').subscribe();
+
+    const req = httpMock.expectOne('/test');
+    expect(req.request.headers.has('Authorization')).toBe(true);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer fake-token');
+
+    req.flush({});
+  });
+});
+```
+
+---
+
+## 18. Test de rutas con RouterTestingModule
+
+```ts
+// app-routing.module.ts (simplificado)
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { HomeComponent } from './home.component';
+import { TodoListComponent } from './todo-list.component';
+
+export const routes: Routes = [
+  { path: 'home', component: HomeComponent },
+  { path: 'todos', component: TodoListComponent },
+  { path: '', redirectTo: '/home', pathMatch: 'full' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule {}
+```
+
+```ts
+// app-routing.module.spec.ts
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { routes } from './app-routing.module';
+import { HomeComponent } from './home.component';
+import { TodoListComponent } from './todo-list.component';
+
+describe('Rutas de la app (Jest)', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [RouterTestingModule.withRoutes(routes)],
+      declarations: [HomeComponent, TodoListComponent]
+    }).compileComponents();
+
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+
+    router.initialNavigation();
+  });
+
+  it('"" debería redirigir a /home', fakeAsync(() => {
+    router.navigate(['']);
+    tick();
+    expect(location.path()).toBe('/home');
+  }));
+
+  it('/todos debería navegar a /todos', fakeAsync(() => {
+    router.navigate(['/todos']);
+    tick();
+    expect(location.path()).toBe('/todos');
+  }));
+});
+```
+
+---
+
+### Resumen
+
+- Usa **TestBed** igual que con Karma/Jasmine, solo cambia la **API de Jest** (`jest.fn`, `jest.spyOn`, `expect` de Jest).
+- Para timers complejos, puedes elegir entre:
+  - `fakeAsync`/`tick` de Angular
+  - o `jest.useFakeTimers()`/`jest.advanceTimersByTime()` de Jest.
+- Para mocks de servicios, usa `jest.Mocked<T>` o simples objetos con `jest.fn()`.
+
+Este archivo te sirve como "traducción mental" de los ejemplos de Jasmine/Karma a Jest puro (sin Angular Testing Library).
