@@ -9,25 +9,25 @@
 
 ---
 
-## 1. Chuleta rápida de Jest + Angular Testing Library
+## 1. Guía rápida de Jest + Angular Testing Library
 
 ```ts
-import { render, screen, fireEvent } from '@testing-library/angular';
+import { render, screen, fireEvent } from "@testing-library/angular";
 
-describe('Mi componente', () => {
-  it('debería renderizar el texto', async () => {
+describe("Mi componente", () => {
+  it("debería renderizar el texto", async () => {
     await render(HelloComponent, {
-      componentProperties: { name: 'Angular' }
+      componentProperties: { name: "Angular" },
     });
 
     expect(screen.getByText(/Hello Angular/i)).toBeInTheDocument();
   });
 
-  it('debería reaccionar a un click', async () => {
+  it("debería reaccionar a un click", async () => {
     await render(CounterComponent);
-    fireEvent.click(screen.getByRole('button', { name: /incrementar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /incrementar/i }));
 
-    expect(screen.getByTestId('value').textContent).toBe('1');
+    expect(screen.getByTestId("value").textContent).toBe("1");
   });
 });
 ```
@@ -42,9 +42,9 @@ describe('Mi componente', () => {
 
 ```ts
 // math.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable } from "@angular/core";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class MathService {
   sum(a: number, b: number): number {
     return a + b;
@@ -54,10 +54,10 @@ export class MathService {
 
 ```ts
 // math.service.spec.ts
-import { TestBed } from '@angular/core/testing';
-import { MathService } from './math.service';
+import { TestBed } from "@angular/core/testing";
+import { MathService } from "./math.service";
 
-describe('MathService (Jest + ATL proyecto)', () => {
+describe("MathService (Jest + ATL proyecto)", () => {
   let service: MathService;
 
   beforeEach(() => {
@@ -65,7 +65,7 @@ describe('MathService (Jest + ATL proyecto)', () => {
     service = TestBed.inject(MathService);
   });
 
-  it('debería sumar', () => {
+  it("debería sumar", () => {
     expect(service.sum(2, 3)).toBe(5);
   });
 });
@@ -77,36 +77,36 @@ describe('MathService (Jest + ATL proyecto)', () => {
 
 ```ts
 // hello.component.ts
-import { Component, Input } from '@angular/core';
+import { Component, Input } from "@angular/core";
 
 @Component({
-  selector: 'app-hello',
-  template: `<h1>Hello {{ name }}!</h1>`
+  selector: "app-hello",
+  template: `<h1>Hello {{ name }}!</h1>`,
 })
 export class HelloComponent {
-  @Input() name = 'World';
+  @Input() name = "World";
 }
 ```
 
 ```ts
 // hello.component.spec.ts
-import { render, screen } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { HelloComponent } from './hello.component';
+import { render, screen } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { HelloComponent } from "./hello.component";
 
-describe('HelloComponent (ATL)', () => {
-  it('debería mostrar World por defecto', async () => {
+describe("HelloComponent (ATL)", () => {
+  it("debería mostrar World por defecto", async () => {
     await render(HelloComponent);
 
-    expect(screen.getByText('Hello World!')).toBeInTheDocument();
+    expect(screen.getByText("Hello World!")).toBeInTheDocument();
   });
 
-  it('debería mostrar el nombre pasado por input', async () => {
+  it("debería mostrar el nombre pasado por input", async () => {
     await render(HelloComponent, {
-      componentProperties: { name: 'Angular' }
+      componentProperties: { name: "Angular" },
     });
 
-    expect(screen.getByText('Hello Angular!')).toBeInTheDocument();
+    expect(screen.getByText("Hello Angular!")).toBeInTheDocument();
   });
 });
 ```
@@ -117,14 +117,14 @@ describe('HelloComponent (ATL)', () => {
 
 ```ts
 // counter.component.ts
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
 @Component({
-  selector: 'app-counter',
+  selector: "app-counter",
   template: `
     <p data-testid="value">{{ count }}</p>
     <button (click)="increment()">Incrementar</button>
-  `
+  `,
 })
 export class CounterComponent {
   count = 0;
@@ -137,23 +137,23 @@ export class CounterComponent {
 
 ```ts
 // counter.component.spec.ts
-import { render, screen, fireEvent } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { CounterComponent } from './counter.component';
+import { render, screen, fireEvent } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { CounterComponent } from "./counter.component";
 
-describe('CounterComponent (ATL)', () => {
-  it('debería iniciar en 0', async () => {
+describe("CounterComponent (ATL)", () => {
+  it("debería iniciar en 0", async () => {
     await render(CounterComponent);
 
-    expect(screen.getByTestId('value')).toHaveTextContent('0');
+    expect(screen.getByTestId("value")).toHaveTextContent("0");
   });
 
-  it('debería incrementar al hacer click', async () => {
+  it("debería incrementar al hacer click", async () => {
     await render(CounterComponent);
 
-    fireEvent.click(screen.getByRole('button', { name: /incrementar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /incrementar/i }));
 
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
+    expect(screen.getByTestId("value")).toHaveTextContent("1");
   });
 });
 ```
@@ -164,40 +164,40 @@ describe('CounterComponent (ATL)', () => {
 
 ```ts
 // child.component.ts
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from "@angular/core";
 
 @Component({
-  selector: 'app-child',
-  template: `<button (click)="notify()">Notify parent</button>`
+  selector: "app-child",
+  template: `<button (click)="notify()">Notify parent</button>`,
 })
 export class ChildComponent {
   @Output() clicked = new EventEmitter<string>();
 
   notify() {
-    this.clicked.emit('hola padre');
+    this.clicked.emit("hola padre");
   }
 }
 ```
 
 ```ts
 // child.component.spec.ts
-import { render, screen, fireEvent } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { ChildComponent } from './child.component';
+import { render, screen, fireEvent } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { ChildComponent } from "./child.component";
 
-describe('ChildComponent (ATL)', () => {
-  it('debería emitir evento al hacer click', async () => {
+describe("ChildComponent (ATL)", () => {
+  it("debería emitir evento al hacer click", async () => {
     const clickedHandler = jest.fn();
 
     await render(ChildComponent, {
       componentOutputs: {
-        clicked: clickedHandler
-      }
+        clicked: clickedHandler,
+      },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /notify parent/i }));
+    fireEvent.click(screen.getByRole("button", { name: /notify parent/i }));
 
-    expect(clickedHandler).toHaveBeenCalledWith('hola padre');
+    expect(clickedHandler).toHaveBeenCalledWith("hola padre");
   });
 });
 ```
@@ -208,8 +208,8 @@ describe('ChildComponent (ATL)', () => {
 
 ```ts
 // todo.service.ts
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable } from "@angular/core";
+import { Observable, of } from "rxjs";
 
 export interface Todo {
   id: number;
@@ -217,7 +217,7 @@ export interface Todo {
   completed: boolean;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class TodoService {
   getTodos(): Observable<Todo[]> {
     return of([]);
@@ -227,16 +227,16 @@ export class TodoService {
 
 ```ts
 // todo-list.component.ts
-import { Component, OnInit } from '@angular/core';
-import { TodoService, Todo } from '../services/todo.service';
+import { Component, OnInit } from "@angular/core";
+import { TodoService, Todo } from "../services/todo.service";
 
 @Component({
-  selector: 'app-todo-list',
+  selector: "app-todo-list",
   template: `
     <ul>
       <li *ngFor="let todo of todos">{{ todo.title }}</li>
     </ul>
-  `
+  `,
 })
 export class TodoListComponent implements OnInit {
   todos: Todo[] = [];
@@ -244,31 +244,30 @@ export class TodoListComponent implements OnInit {
   constructor(private todoService: TodoService) {}
 
   ngOnInit(): void {
-    this.todoService.getTodos().subscribe(t => (this.todos = t));
+    this.todoService.getTodos().subscribe((t) => (this.todos = t));
   }
 }
 ```
 
 ```ts
 // todo-list.component.spec.ts
-import { render, screen } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { of } from 'rxjs';
-import { TodoListComponent } from './todo-list.component';
-import { TodoService } from '../services/todo.service';
+import { render, screen } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { of } from "rxjs";
+import { TodoListComponent } from "./todo-list.component";
+import { TodoService } from "../services/todo.service";
 
-describe('TodoListComponent (ATL)', () => {
-  it('debería mostrar lista de todos', async () => {
+describe("TodoListComponent (ATL)", () => {
+  it("debería mostrar lista de todos", async () => {
     const todoServiceMock: Partial<TodoService> = {
-      getTodos: () =>
-        of([{ id: 1, title: 'Test todo', completed: false }])
+      getTodos: () => of([{ id: 1, title: "Test todo", completed: false }]),
     };
 
     await render(TodoListComponent, {
-      providers: [{ provide: TodoService, useValue: todoServiceMock }]
+      providers: [{ provide: TodoService, useValue: todoServiceMock }],
     });
 
-    expect(screen.getByText('Test todo')).toBeInTheDocument();
+    expect(screen.getByText("Test todo")).toBeInTheDocument();
   });
 });
 ```
@@ -279,11 +278,11 @@ describe('TodoListComponent (ATL)', () => {
 
 ```ts
 // login-form.component.ts
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 
 @Component({
-  selector: 'app-login-form',
+  selector: "app-login-form",
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>
@@ -296,15 +295,15 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
       </label>
       <button type="submit" [disabled]="form.invalid">Login</button>
     </form>
-  `
+  `,
 })
 export class LoginFormComponent {
   form: FormGroup;
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      email: ["", [Validators.required, Validators.email]],
+      password: ["", Validators.required],
     });
   }
 
@@ -318,33 +317,35 @@ export class LoginFormComponent {
 
 ```ts
 // login-form.component.spec.ts
-import { render, screen, fireEvent } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { ReactiveFormsModule } from '@angular/forms';
-import { LoginFormComponent } from './login-form.component';
+import { render, screen, fireEvent } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { ReactiveFormsModule } from "@angular/forms";
+import { LoginFormComponent } from "./login-form.component";
 
-describe('LoginFormComponent (ATL)', () => {
-  it('debería deshabilitar el botón cuando es inválido', async () => {
+describe("LoginFormComponent (ATL)", () => {
+  it("debería deshabilitar el botón cuando es inválido", async () => {
     await render(LoginFormComponent, {
-      imports: [ReactiveFormsModule]
+      imports: [ReactiveFormsModule],
     });
 
-    const button = screen.getByRole('button', { name: /login/i });
+    const button = screen.getByRole("button", { name: /login/i });
     expect(button).toBeDisabled();
   });
 
-  it('debería habilitar el botón cuando el formulario es válido', async () => {
+  it("debería habilitar el botón cuando el formulario es válido", async () => {
     await render(LoginFormComponent, {
-      imports: [ReactiveFormsModule]
+      imports: [ReactiveFormsModule],
     });
 
     const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
-    const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
+    const passwordInput = screen.getByLabelText(
+      /password/i
+    ) as HTMLInputElement;
 
-    fireEvent.input(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.input(passwordInput, { target: { value: '123456' } });
+    fireEvent.input(emailInput, { target: { value: "test@example.com" } });
+    fireEvent.input(passwordInput, { target: { value: "123456" } });
 
-    const button = screen.getByRole('button', { name: /login/i });
+    const button = screen.getByRole("button", { name: /login/i });
     expect(button).toBeEnabled();
   });
 });
@@ -356,26 +357,16 @@ describe('LoginFormComponent (ATL)', () => {
 
 ```ts
 // toggle-panel.component.ts
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
 @Component({
-  selector: 'app-toggle-panel',
+  selector: "app-toggle-panel",
   template: `
-    <button
-      [attr.aria-expanded]="open"
-      (click)="toggle()"
-      id="toggle-btn"
-    >
+    <button [attr.aria-expanded]="open" (click)="toggle()" id="toggle-btn">
       Toggle
     </button>
-    <div
-      *ngIf="open"
-      role="region"
-      aria-labelledby="toggle-btn"
-    >
-      Contenido
-    </div>
-  `
+    <div *ngIf="open" role="region" aria-labelledby="toggle-btn">Contenido</div>
+  `,
 })
 export class TogglePanelComponent {
   open = false;
@@ -388,27 +379,27 @@ export class TogglePanelComponent {
 
 ```ts
 // toggle-panel.component.spec.ts
-import { render, screen, fireEvent } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { TogglePanelComponent } from './toggle-panel.component';
+import { render, screen, fireEvent } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { TogglePanelComponent } from "./toggle-panel.component";
 
-describe('TogglePanelComponent (ATL + ARIA)', () => {
+describe("TogglePanelComponent (ATL + ARIA)", () => {
   it('debería tener aria-expanded="false" inicialmente', async () => {
     await render(TogglePanelComponent);
 
-    const button = screen.getByRole('button', { name: /toggle/i });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('region')).toBeNull();
+    const button = screen.getByRole("button", { name: /toggle/i });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("region")).toBeNull();
   });
 
-  it('debería mostrar la región al hacer toggle', async () => {
+  it("debería mostrar la región al hacer toggle", async () => {
     await render(TogglePanelComponent);
 
-    const button = screen.getByRole('button', { name: /toggle/i });
+    const button = screen.getByRole("button", { name: /toggle/i });
     fireEvent.click(button);
 
-    expect(button).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('region')).toBeInTheDocument();
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("region")).toBeInTheDocument();
   });
 });
 ```
@@ -419,18 +410,18 @@ describe('TogglePanelComponent (ATL + ARIA)', () => {
 
 ```ts
 // delayed-message.component.ts
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
 
 @Component({
-  selector: 'app-delayed-message',
-  template: `<p>{{ message }}</p>`
+  selector: "app-delayed-message",
+  template: `<p>{{ message }}</p>`,
 })
 export class DelayedMessageComponent {
-  message = '...';
+  message = "...";
 
   showMessage() {
     setTimeout(() => {
-      this.message = 'Hola';
+      this.message = "Hola";
     }, 1000);
   }
 }
@@ -438,11 +429,11 @@ export class DelayedMessageComponent {
 
 ```ts
 // delayed-message.component.spec.ts
-import { render, screen } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { DelayedMessageComponent } from './delayed-message.component';
+import { render, screen } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { DelayedMessageComponent } from "./delayed-message.component";
 
-describe('DelayedMessageComponent (ATL + Jest timers)', () => {
+describe("DelayedMessageComponent (ATL + Jest timers)", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -451,7 +442,7 @@ describe('DelayedMessageComponent (ATL + Jest timers)', () => {
     jest.useRealTimers();
   });
 
-  it('debería mostrar mensaje después de 1s', async () => {
+  it("debería mostrar mensaje después de 1s", async () => {
     const { fixture } = await render(DelayedMessageComponent);
 
     fixture.componentInstance.showMessage();
@@ -459,7 +450,7 @@ describe('DelayedMessageComponent (ATL + Jest timers)', () => {
     jest.advanceTimersByTime(1000);
     fixture.detectChanges();
 
-    expect(screen.getByText('Hola')).toBeInTheDocument();
+    expect(screen.getByText("Hola")).toBeInTheDocument();
   });
 });
 ```
@@ -470,53 +461,53 @@ describe('DelayedMessageComponent (ATL + Jest timers)', () => {
 
 ```ts
 // hover-highlight.directive.ts
-import { Directive, ElementRef, HostListener, Input } from '@angular/core';
+import { Directive, ElementRef, HostListener, Input } from "@angular/core";
 
 @Directive({
-  selector: '[appHoverHighlight]'
+  selector: "[appHoverHighlight]",
 })
 export class HoverHighlightDirective {
-  @Input('appHoverHighlight') color = 'yellow';
+  @Input("appHoverHighlight") color = "yellow";
 
   constructor(private el: ElementRef) {}
 
-  @HostListener('mouseenter')
+  @HostListener("mouseenter")
   onEnter() {
     this.el.nativeElement.style.backgroundColor = this.color;
   }
 
-  @HostListener('mouseleave')
+  @HostListener("mouseleave")
   onLeave() {
-    this.el.nativeElement.style.backgroundColor = '';
+    this.el.nativeElement.style.backgroundColor = "";
   }
 }
 ```
 
 ```ts
 // hover-highlight.directive.spec.ts
-import { Component } from '@angular/core';
-import { render, screen, fireEvent } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { HoverHighlightDirective } from './hover-highlight.directive';
+import { Component } from "@angular/core";
+import { render, screen, fireEvent } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { HoverHighlightDirective } from "./hover-highlight.directive";
 
 @Component({
-  template: `<p appHoverHighlight="red">Texto 1</p>`
+  template: `<p appHoverHighlight="red">Texto 1</p>`,
 })
 class TestHostComponent {}
 
-describe('HoverHighlightDirective (ATL)', () => {
-  it('debería aplicar y quitar el color al hacer hover', async () => {
+describe("HoverHighlightDirective (ATL)", () => {
+  it("debería aplicar y quitar el color al hacer hover", async () => {
     await render(TestHostComponent, {
-      declarations: [HoverHighlightDirective]
+      declarations: [HoverHighlightDirective],
     });
 
-    const p = screen.getByText('Texto 1');
+    const p = screen.getByText("Texto 1");
 
     fireEvent.mouseEnter(p);
-    expect(p).toHaveStyle({ backgroundColor: 'red' });
+    expect(p).toHaveStyle({ backgroundColor: "red" });
 
     fireEvent.mouseLeave(p);
-    expect(p).not.toHaveStyle({ backgroundColor: 'red' });
+    expect(p).not.toHaveStyle({ backgroundColor: "red" });
   });
 });
 ```
@@ -527,9 +518,9 @@ describe('HoverHighlightDirective (ATL)', () => {
 
 ```ts
 // uppercase-first.pipe.ts
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform } from "@angular/core";
 
-@Pipe({ name: 'uppercaseFirst' })
+@Pipe({ name: "uppercaseFirst" })
 export class UppercaseFirstPipe implements PipeTransform {
   transform(value: string | null): string | null {
     if (!value) return value;
@@ -540,13 +531,13 @@ export class UppercaseFirstPipe implements PipeTransform {
 
 ```ts
 // uppercase-first.pipe.spec.ts
-import { UppercaseFirstPipe } from './uppercase-first.pipe';
+import { UppercaseFirstPipe } from "./uppercase-first.pipe";
 
-describe('UppercaseFirstPipe (Jest + ATL project)', () => {
+describe("UppercaseFirstPipe (Jest + ATL project)", () => {
   const pipe = new UppercaseFirstPipe();
 
-  it('debería capitalizar la primera letra', () => {
-    expect(pipe.transform('angular')).toBe('Angular');
+  it("debería capitalizar la primera letra", () => {
+    expect(pipe.transform("angular")).toBe("Angular");
   });
 });
 ```
@@ -557,40 +548,40 @@ describe('UppercaseFirstPipe (Jest + ATL project)', () => {
 
 ```ts
 // nav.component.ts
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component } from "@angular/core";
+import { Router } from "@angular/router";
 
 @Component({
-  selector: 'app-nav',
-  template: `<button (click)="goHome()">Home</button>`
+  selector: "app-nav",
+  template: `<button (click)="goHome()">Home</button>`,
 })
 export class NavComponent {
   constructor(private router: Router) {}
 
   goHome() {
-    this.router.navigate(['/home']);
+    this.router.navigate(["/home"]);
   }
 }
 ```
 
 ```ts
 // nav.component.spec.ts
-import { render, screen, fireEvent } from '@testing-library/angular';
-import '@testing-library/jest-dom';
-import { Router } from '@angular/router';
-import { NavComponent } from './nav.component';
+import { render, screen, fireEvent } from "@testing-library/angular";
+import "@testing-library/jest-dom";
+import { Router } from "@angular/router";
+import { NavComponent } from "./nav.component";
 
-describe('NavComponent (ATL)', () => {
-  it('debería llamar a router.navigate', async () => {
+describe("NavComponent (ATL)", () => {
+  it("debería llamar a router.navigate", async () => {
     const routerMock = { navigate: jest.fn() };
 
     await render(NavComponent, {
-      providers: [{ provide: Router, useValue: routerMock }]
+      providers: [{ provide: Router, useValue: routerMock }],
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /home/i }));
+    fireEvent.click(screen.getByRole("button", { name: /home/i }));
 
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/home']);
+    expect(routerMock.navigate).toHaveBeenCalledWith(["/home"]);
   });
 });
 ```
@@ -603,17 +594,17 @@ ATL está orientado a componentes. Para guards/resolvers/interceptors usas `Test
 
 ```ts
 // auth.guard.ts
-import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
-import { AuthService } from './auth.service';
+import { Injectable } from "@angular/core";
+import { CanActivate, Router } from "@angular/router";
+import { AuthService } from "./auth.service";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class AuthGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
 
   canActivate(): boolean {
     if (!this.auth.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(["/login"]);
       return false;
     }
     return true;
@@ -623,12 +614,12 @@ export class AuthGuard implements CanActivate {
 
 ```ts
 // auth.guard.spec.ts
-import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { AuthGuard } from './auth.guard';
-import { AuthService } from './auth.service';
+import { TestBed } from "@angular/core/testing";
+import { Router } from "@angular/router";
+import { AuthGuard } from "./auth.guard";
+import { AuthService } from "./auth.service";
 
-describe('AuthGuard (Jest + ATL proyecto)', () => {
+describe("AuthGuard (Jest + ATL proyecto)", () => {
   let guard: AuthGuard;
   let authServiceMock: any;
   let routerMock: any;
@@ -641,19 +632,19 @@ describe('AuthGuard (Jest + ATL proyecto)', () => {
       providers: [
         AuthGuard,
         { provide: AuthService, useValue: authServiceMock },
-        { provide: Router, useValue: routerMock }
-      ]
+        { provide: Router, useValue: routerMock },
+      ],
     });
 
     guard = TestBed.inject(AuthGuard);
   });
 
-  it('debería redirigir si no está logueado', () => {
+  it("debería redirigir si no está logueado", () => {
     authServiceMock.isLoggedIn.mockReturnValue(false);
 
     const result = guard.canActivate();
     expect(result).toBe(false);
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/login']);
+    expect(routerMock.navigate).toHaveBeenCalledWith(["/login"]);
   });
 });
 ```
@@ -669,6 +660,7 @@ describe('AuthGuard (Jest + ATL proyecto)', () => {
   - Interacciones: `fireEvent` (y si quieres, `userEvent`).
   - Matchers: `toBeInTheDocument`, `toHaveAttribute`, `toHaveTextContent`, `toHaveStyle`, etc.
 
-Este archivo complementa al de Jest "puro":  
-- Usa aquel como referencia para **lógica de negocio, servicios, HTTP, routing**.  
+Este archivo complementa al de Jest "puro":
+
+- Usa aquel como referencia para **lógica de negocio, servicios, HTTP, routing**.
 - Usa este para todo lo que implique **UI y comportamiento de usuario**.
